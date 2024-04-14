@@ -68,14 +68,11 @@ func establishFields(header string, lineOne string) {
 	headerFields := strings.Split(header, ",")
 	for _, title := range headerFields {
 		headerlist().Insert(title)
-
 	}
 
-	for _, title := range headerlist().Data {
-		if current, ok := title.(string); ok {
-			fmt.Println(current)
-		}
-
+	for idx := range headerFields {
+		fmt.Println(idx)
+		fmt.Println(headerlist().ValueByIndex(idx))
 	}
 
 	firstLine := strings.Split(lineOne, ",")
