@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -35,6 +36,27 @@ func validateArgs(args []string) (result bool) {
 	return
 }
 
+func inputFileCheck(inputFileName string, outputFileName string) (result bool) {
+	result = false
+	infile, inerr := os.Open(inputFileName)
+	if inerr != nil {
+		log.Fatal("Could not open input file", inerr)
+		return
+	}
+
+	outfile, outerr := os.Create(outputFileName)
+	if outerr != nil {
+		log.Fatal("Could not open/create output file", outerr)
+		defer infile.Close()
+		return
+	} else {
+		defer infile.Close()
+		defer outfile.Close()
+		result = true
+		return
+	}
+}
+
 func main() {
 	var validInput bool = validateArgs(os.Args[1:])
 	if !validInput {
@@ -42,5 +64,6 @@ func main() {
 	}
 	inputFileName := os.Args[1]
 	outputFileName := os.Args[2]
+	inputFileCheck(inputFileName, outputFileName)
 
 }
