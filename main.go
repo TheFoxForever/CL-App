@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -12,13 +11,13 @@ import (
 )
 
 type Headers struct {
-	value    int
-	income   float64
-	age      int
-	rooms    int
-	bedrooms int
-	pop      int
-	hh       int
+	Value    int
+	Income   float64
+	Age      int
+	Rooms    int
+	Bedrooms int
+	Pop      int
+	HH       int
 }
 
 func printHelp() {
@@ -72,8 +71,24 @@ func inputFileCheck(inputFileName string, outputFileName string) (result bool) {
 }
 
 func writeFile(data Headers, outfile string) {
-	file, _ := json.MarshalIndent(data, "", " ")
-	_ = ioutil.WriteFile(outfile, file, 0644)
+	file, err := json.Marshal(data)
+	if err != nil {
+		log.Fatal("Error marshaling JSON:", err)
+	}
+
+	f, err := os.OpenFile(outfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(file); err != nil {
+		log.Fatal("Error writing to file:", err)
+	}
+
+	if _, err := f.WriteString("\n"); err != nil {
+		log.Fatal("Error writing newline to file:", err)
+	}
 }
 
 func processLine(input string, outfile string) {
@@ -81,43 +96,42 @@ func processLine(input string, outfile string) {
 	var curHeader Headers
 	value, err := strconv.Atoi(splitInput[0])
 	if err != nil {
-		value2, err := strconv.ParseUint(splitInput[0], 10, 32)
-		if err != nil {
-			value = int(value2)
+		value2, err2 := strconv.ParseFloat(splitInput[0], 64)
+		if err2 != nil {
+			log.Fatal("Could not interpret input within first field", err)
 		} else {
-			panic(err)
+			value = int(value2)
 		}
 	}
-	curHeader.value = value
+	curHeader.Value = value
 
 	income, err := strconv.ParseFloat(splitInput[1], 64)
 	if err != nil {
 		panic(err)
 	}
-	curHeader.income = income
+	curHeader.Income = income
 
-	curHeader.age, err = strconv.Atoi(splitInput[2])
+	curHeader.Age, err = strconv.Atoi(splitInput[2])
 	if err != nil {
 		panic(err)
 	}
-	curHeader.rooms, err = strconv.Atoi(splitInput[3])
+	curHeader.Rooms, err = strconv.Atoi(splitInput[3])
 	if err != nil {
 		panic(err)
 	}
-	curHeader.bedrooms, err = strconv.Atoi(splitInput[4])
+	curHeader.Bedrooms, err = strconv.Atoi(splitInput[4])
 	if err != nil {
 		panic(err)
 	}
-	curHeader.pop, err = strconv.Atoi(splitInput[5])
+	curHeader.Pop, err = strconv.Atoi(splitInput[5])
 	if err != nil {
 		panic(err)
 	}
-	curHeader.hh, err = strconv.Atoi(splitInput[6])
+	curHeader.HH, err = strconv.Atoi(splitInput[6])
 	if err != nil {
 		panic(err)
 	}
 	writeFile(curHeader, outfile)
-	fmt.Println(curHeader)
 }
 
 func processCSV(inputFileName string, outputFileName string) (result bool) {
