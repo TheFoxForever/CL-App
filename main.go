@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"strings"
 )
+
+type Builder struct {
+}
 
 func printHelp() {
 	fmt.Println("\nHelp Page:")
@@ -14,8 +18,8 @@ func printHelp() {
 	fmt.Println("main.exe <first arguement> <second arguement")
 	fmt.Println("The first argument should be your input in csv format")
 	fmt.Println("The second argument should be your output filename ending in .json")
-	fmt.Println("Example: ./main.exe inputfile.csv outputfile.json\n")
-
+	fmt.Println("Example: ./main.exe inputfile.csv outputfile.json")
+	fmt.Println("")
 }
 
 func validateArgs(args []string) (result bool) {
@@ -57,6 +61,47 @@ func inputFileCheck(inputFileName string, outputFileName string) (result bool) {
 	}
 }
 
+func establishFields(header string, lineOne string) {
+	headerFields := strings.Split(header, ",")
+	for _, title := range headerFields {
+		fmt.Println(title)
+	}
+
+	firstLine := strings.Split(lineOne, ",")
+	for _, value := range firstLine {
+		fmt.Println(value)
+	}
+}
+
+func processCSV(inputFileName string, outputfileName string) (result bool) {
+	result = false
+	infile, inerr := os.Open(inputFileName)
+	if inerr != nil {
+		log.Fatal("Could not open input file", inerr)
+		return
+	}
+
+	fileScanner := bufio.NewScanner(infile)
+	fileScanner.Split(bufio.ScanLines)
+
+	var firsttwo [2]string
+	var idx int = 0
+	for fileScanner.Scan() {
+		firsttwo[idx] = fileScanner.Text()
+		idx++
+		if idx >= 2 {
+			break
+		}
+	}
+	establishFields(firsttwo[0], firsttwo[1])
+	fmt.Println(len(firsttwo[0]))
+	fmt.Println(len(firsttwo[1]))
+
+	fmt.Println(outputfileName)
+	result = true
+	return
+}
+
 func main() {
 	var validInput bool = validateArgs(os.Args[1:])
 	if !validInput {
@@ -65,5 +110,5 @@ func main() {
 	inputFileName := os.Args[1]
 	outputFileName := os.Args[2]
 	inputFileCheck(inputFileName, outputFileName)
-
+	processCSV(inputFileName, outputFileName)
 }
