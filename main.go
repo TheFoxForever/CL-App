@@ -62,9 +62,21 @@ func inputFileCheck(inputFileName string, outputFileName string) (result bool) {
 }
 
 func establishFields(header string, lineOne string) {
+	headerlist := NewGenericList[any]
+	// firstline := NewGenericList[any]
+
 	headerFields := strings.Split(header, ",")
 	for _, title := range headerFields {
-		fmt.Println(title)
+		headerlist().Insert(title)
+		// headerlist.Insert(title)
+		// fmt.Println(title)
+	}
+
+	for _, title := range headerlist().Data {
+		if current, ok := title.(string); ok {
+			fmt.Println(current)
+		}
+
 	}
 
 	firstLine := strings.Split(lineOne, ",")
