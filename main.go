@@ -2,13 +2,22 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
-type Builder struct {
+type Headers struct {
+	Value    int
+	Income   float64
+	Age      int
+	Rooms    int
+	Bedrooms int
+	Pop      int
+	HH       int
 }
 
 func printHelp() {
@@ -61,27 +70,71 @@ func inputFileCheck(inputFileName string, outputFileName string) (result bool) {
 	}
 }
 
-func establishFields(header string, lineOne string) {
-	headerlist := NewGenericList[any]
-	// firstline := NewGenericList[any]
-
-	headerFields := strings.Split(header, ",")
-	for _, title := range headerFields {
-		headerlist().Insert(title)
+func writeFile(data Headers, outfile string) {
+	file, err := json.Marshal(data)
+	if err != nil {
+		log.Fatal("Error marshaling JSON:", err)
 	}
 
-	for idx := range headerFields {
-		fmt.Println(idx)
-		fmt.Println(headerlist().ValueByIndex(idx))
+	f, err := os.OpenFile(outfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(file); err != nil {
+		log.Fatal("Error writing to file:", err)
 	}
 
-	firstLine := strings.Split(lineOne, ",")
-	for _, value := range firstLine {
-		fmt.Println(value)
+	if _, err := f.WriteString("\n"); err != nil {
+		log.Fatal("Error writing newline to file:", err)
 	}
 }
 
-func processCSV(inputFileName string, outputfileName string) (result bool) {
+func processLine(input string, outfile string) {
+	splitInput := strings.Split(input, ",")
+	var curHeader Headers
+	value, err := strconv.Atoi(splitInput[0])
+	if err != nil {
+		value2, err2 := strconv.ParseFloat(splitInput[0], 64)
+		if err2 != nil {
+			log.Fatal("Could not interpret input within first field", err)
+		} else {
+			value = int(value2)
+		}
+	}
+	curHeader.Value = value
+
+	income, err := strconv.ParseFloat(splitInput[1], 64)
+	if err != nil {
+		panic(err)
+	}
+	curHeader.Income = income
+
+	curHeader.Age, err = strconv.Atoi(splitInput[2])
+	if err != nil {
+		panic(err)
+	}
+	curHeader.Rooms, err = strconv.Atoi(splitInput[3])
+	if err != nil {
+		panic(err)
+	}
+	curHeader.Bedrooms, err = strconv.Atoi(splitInput[4])
+	if err != nil {
+		panic(err)
+	}
+	curHeader.Pop, err = strconv.Atoi(splitInput[5])
+	if err != nil {
+		panic(err)
+	}
+	curHeader.HH, err = strconv.Atoi(splitInput[6])
+	if err != nil {
+		panic(err)
+	}
+	writeFile(curHeader, outfile)
+}
+
+func processCSV(inputFileName string, outputFileName string) (result bool) {
 	result = false
 	infile, inerr := os.Open(inputFileName)
 	if inerr != nil {
@@ -89,23 +142,31 @@ func processCSV(inputFileName string, outputfileName string) (result bool) {
 		return
 	}
 
+	outfile, outerr := os.Open(outputFileName)
+	if outerr != nil {
+		log.Fatal("Could not open output file", outerr)
+		defer infile.Close()
+		return
+	}
+
 	fileScanner := bufio.NewScanner(infile)
 	fileScanner.Split(bufio.ScanLines)
 
-	var firsttwo [2]string
 	var idx int = 0
 	for fileScanner.Scan() {
-		firsttwo[idx] = fileScanner.Text()
-		idx++
-		if idx >= 2 {
-			break
+		if idx == 0 {
+			idx++
+			continue
+		} else {
+			var line string = fileScanner.Text()
+			processLine(line, outputFileName)
 		}
-	}
-	establishFields(firsttwo[0], firsttwo[1])
-	fmt.Println(len(firsttwo[0]))
-	fmt.Println(len(firsttwo[1]))
 
-	fmt.Println(outputfileName)
+	}
+
+	defer infile.Close()
+	defer outfile.Close()
+
 	result = true
 	return
 }
