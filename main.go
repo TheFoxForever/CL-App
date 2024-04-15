@@ -91,47 +91,62 @@ func writeFile(data Headers, outfile string) {
 	}
 }
 
-func processLine(input string, outfile string) {
+func parseLine(input string) (Headers, error) {
 	splitInput := strings.Split(input, ",")
+	if len(splitInput) < 7 {
+		return Headers{}, fmt.Errorf("not enough data in line")
+	}
 	var curHeader Headers
+
 	value, err := strconv.Atoi(splitInput[0])
 	if err != nil {
-		value2, err2 := strconv.ParseFloat(splitInput[0], 64)
-		if err2 != nil {
-			log.Fatal("Could not interpret input within first field", err)
+		valueFloat, errFloat := strconv.ParseFloat(splitInput[0], 64)
+		if errFloat != nil {
+			return Headers{}, fmt.Errorf("could not parse value: %v", errFloat)
 		} else {
-			value = int(value2)
+			value = int(valueFloat)
 		}
 	}
 	curHeader.Value = value
 
-	income, err := strconv.ParseFloat(splitInput[1], 64)
+	curHeader.Income, err = strconv.ParseFloat(splitInput[1], 64)
 	if err != nil {
-		panic(err)
+		return Headers{}, fmt.Errorf("could not parse income: %v", err)
 	}
-	curHeader.Income = income
 
 	curHeader.Age, err = strconv.Atoi(splitInput[2])
 	if err != nil {
-		panic(err)
+		return Headers{}, fmt.Errorf("could not parse age: %v", err)
 	}
+
 	curHeader.Rooms, err = strconv.Atoi(splitInput[3])
 	if err != nil {
-		panic(err)
+		return Headers{}, fmt.Errorf("could not parse age: %v", err)
 	}
+
 	curHeader.Bedrooms, err = strconv.Atoi(splitInput[4])
 	if err != nil {
-		panic(err)
+		return Headers{}, fmt.Errorf("could not parse age: %v", err)
 	}
+
 	curHeader.Pop, err = strconv.Atoi(splitInput[5])
 	if err != nil {
-		panic(err)
+		return Headers{}, fmt.Errorf("could not parse age: %v", err)
 	}
+
 	curHeader.HH, err = strconv.Atoi(splitInput[6])
 	if err != nil {
-		panic(err)
+		return Headers{}, fmt.Errorf("could not parse age: %v", err)
 	}
-	writeFile(curHeader, outfile)
+	return curHeader, nil
+}
+
+func processLine(input string, outfile string) {
+	headers, err := parseLine(input)
+	if err != nil {
+		log.Fatal(err)
+	}
+	writeFile(headers, outfile)
 }
 
 func processCSV(inputFileName string, outputFileName string) (result bool) {
